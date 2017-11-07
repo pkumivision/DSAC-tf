@@ -17,7 +17,7 @@ flags.DEFINE_float("learning_rate_decay", 0.1, "Learning rate decay")
 flags.DEFINE_float("beta1", 0.9, "Momentum term of adam")
 flags.DEFINE_integer("img_height", 480, "Image height")
 flags.DEFINE_integer("img_width", 640, "Image width")
-flags.DEFINE_integer("lr_step", 10000, "Learning rate decay step")
+flags.DEFINE_integer("lr_step", 5000, "Learning rate decay step")
 flags.DEFINE_integer("summary_freq", 1000, "Logging every log_freq iterations")
 flags.DEFINE_integer("save_latest_freq", 100000, \
     "Save the latest model every save_latest_freq iterations (overwrites the previous latest model)")

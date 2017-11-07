@@ -17,6 +17,7 @@ class DataGenerator(object):
                 self.rgb_paths.append(rgb)
                 self.obj_paths.append(obj)
         self.indexs = np.arange(len(self.rgb_paths))
+        self.total = len(self.rgb_paths) * self.opt.training_images * self.opt.training_patches
         self._new_epoch()
 
     def _new_epoch(self):
@@ -43,12 +44,12 @@ class DataGenerator(object):
  #           maxy = sy + self.opt.input_size/2
 
  #           self.patches = rgb[valid_index]
-              
+
             j = 0
             while j < self.opt.training_patches:
                 x = np.random.randint(self.opt.input_size/2, rgb_w-self.opt.input_size/2)
                 y = np.random.randint(self.opt.input_size/2, rgb_h-self.opt.input_size/2)
-                if obj[y,x,2] == 0: 
+                if obj[y,x,2] == 0:
                     continue
                 minx = x - self.opt.input_size/2
                 maxx = x + self.opt.input_size/2
