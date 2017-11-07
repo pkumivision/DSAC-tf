@@ -17,7 +17,7 @@ class DataGenerator(object):
                 self.rgb_paths.append(rgb)
                 self.obj_paths.append(obj)
         self.indexs = np.arange(len(self.rgb_paths))
-        self.total = len(self.rgb_paths) * self.opt.training_images * self.opt.training_patches
+        self.total = len(self.rgb_paths) * self.opt.training_patches
         self._new_epoch()
 
     def _new_epoch(self):
