@@ -5,13 +5,12 @@ import math
 from multiprocessing import Pool
 
 from utils import getInfo, stochasticSubSample, getDiffMap, calcDistance, our2cv
-from objLearner import objLearner
 import properties
 
 class ScoreGenerator(object):
-	def __init__(self, opt, sess):
+	def __init__(self, opt, objLearner, sess):
 		self.opt = opt
-		self.ol = objLearner(opt)
+		self.ol = objLearner
 		self.sess = self.ol.predict_init(sess)
 		self.rgb_paths = []
 		self.pose_paths = []

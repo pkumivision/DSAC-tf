@@ -101,7 +101,7 @@ class ScoreLearner(object):
             start_time = time.time()
             acc_loss = 0
             lr_value = self.opt.learning_rate
-            data_generator = scoreGenerator(self.opt, sess)
+            data_generator = scoreGenerator(self.opt, self.ol, sess)
             self.total = data_generator.total
             self.opt.steps_per_epoch = int(self.total//self.opt.batch_size)
 
