@@ -102,7 +102,7 @@ def objNet(inputs,
       return net, end_points
 
 def scoreNet(inputs,
-           num_classes=3,
+           num_classes=1,
            is_training=True,
            dropout_keep_prob=0.5,
            spatial_squeeze=True,

@@ -18,10 +18,7 @@ class ScoreLearner(object):
 
     def compute_loss(self, preds, labels):
         with tf.name_scope('compute_loss'):
-            if self.opt.loss == "L1":
-                loss = tf.reduce_mean(tf.abs(preds-labels))
-            else:
-                loss = tf.reduce_mean(tf.norm(preds-labels, axis=1))
+            loss = tf.reduce_mean(tf.abs(preds-labels))
             return loss
 
     def collect_summaries(self):
@@ -31,7 +28,7 @@ class ScoreLearner(object):
 #            tf.summary.histogram(var.op.name+'/values', var)
         for grad, var in self.grads_and_vars:
             tf.summary.scalar(var.op.name+'/gradients', tf.reduce_mean(grad))
-        tf.summary.image('image', self.input)
+        #tf.summary.image('image', self.input)
 
     def get_train_op(self):
         train_vars = [var for var in tf.trainable_variables()]
@@ -46,19 +43,16 @@ class ScoreLearner(object):
                                           self.global_step+1)
 
     def build_graph(self, mode):
-        with tf.name_scope('obj'):
-            self.ol = objLearner(self.opt)
-            self.ol.build_graph()
-        with tf.name_scope('score'):
-            self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.channel))
-            self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.batch_size))
-            input_process = tf.cast(self.input, tf.float32) - 45.0
-            self.preds, self.end_points = scoreNet(input_process)
+        self.ol = objLearner(self.opt)
+        self.ol.build_graph()
+
+        self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.channel))
+        self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.batch_size))
+        input_process = tf.cast(self.input, tf.float32) - 45.0
+        self.preds, self.end_points = scoreNet(input_process)
 
     def train(self):
         self.build_graph('train')
-        self.total = self.opt.training_images * self.opt.training_patches
-        self.opt.steps_per_epoch = int(self.total//self.opt.batch_size)
         self.loss = self.compute_loss(self.preds, self.labels)
 
         self.learning_rate = tf.Variable(0.0, trainable=False)
@@ -67,20 +61,39 @@ class ScoreLearner(object):
 
         self.get_train_op()
         self.collect_summaries()
+
+        obj_parameters = []
+        score_parameters = []
         with tf.name_scope("parameter_count"):
+            for v in tf.trainable_variables():
+                if v.name.startswith('score'):
+                    score_parameters.append(v)
+                elif v.name.startswith('obj'):
+                    obj_parameters.append(v)
+                else:
+                    print 'UNKNOWN PARAMETER:', v.name
             parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) \
-                                            for v in tf.trainable_variables()])
-        self.saver = tf.train.Saver([var for var in tf.trainable_variables()] + \
+                                            for v in score_parameters])
+
+        self.saver = tf.train.Saver([var for var in score_parameters] + \
                                     [self.global_step])
+        obj_saver = tf.train.Saver([var for var in obj_parameters])
+
         sv = tf.train.Supervisor(logdir=self.opt.checkpoint_dir,
                                  save_summaries_secs=0,
                                  saver=None)
         with sv.managed_session() as sess:
-            print 'Trainable variables:'
+            print 'All variables:'
             for var in tf.trainable_variables():
+                print var.name,
+            print 'Trainable variables:'
+            for var in score_parameters:
                 print var.name,
             print
             print 'parameter count =', sess.run(parameter_count)
+            print 'Loading ObjNet...'
+            obj_saver.restore(sess, self.opt.obj_model)
+            print 'Load ObjNet model successfully'
             if self.opt.continue_train:
                 print 'Resume training from previous checkpoint'
                 checkpoint = tf.train.latest_checkpoint(self.opt.checkpoint_dir)
@@ -88,7 +101,9 @@ class ScoreLearner(object):
             start_time = time.time()
             acc_loss = 0
             lr_value = self.opt.learning_rate
-            data_generator = scoreGenerator(self.opt)
+            data_generator = scoreGenerator(self.opt, sess)
+            self.total = data_generator.total
+            self.opt.steps_per_epoch = int(self.total//self.opt.batch_size)
 
             for step in xrange(1, self.opt.max_steps):
                 fetches = {
@@ -129,18 +144,12 @@ class ScoreLearner(object):
                     start_time = time.time()
                     acc_loss = 0
 
-                   # print results['label']
-                   # print self.preprocess_label(results['label'],self.opt.label_alpha,self.opt.label_beta)
-                   # print results['preds']
-
                 if gs % self.opt.lr_step == 0:
                     lr_value = self.opt.learning_rate * (self.opt.learning_rate_decay ** int(gs/self.opt.lr_step))
                     print '[*] Learning Rate Update to', lr_value
 
                 if step % self.opt.save_latest_freq == 0:
                     self.save(sess, self.opt.checkpoint_dir, gs)
-                #if step % self.opt.steps_per_epoch == 0:
-                #    self.save(sess, self.opt.checkpoint_dir, gs)
             self.save(sess, self.opt.checkpoint_dir, gs+1)
         print 'optimize done'
 

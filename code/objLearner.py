@@ -139,13 +139,6 @@ class objLearner(object):
             self.save(sess, self.opt.checkpoint_dir, gs+1)
         print 'optimize done'
 
-    def predict_init(self, sess):
-        self.build_graph('test')
-        saver = tf.train.Saver([var for var in tf.trainable_variables()])
-        print 'Restore from', self.opt.ckpt_file
-        saver.restore(sess, self.opt.ckpt_file)
-        return sess
-
     def predict(self, sess, patches):
         objs = []
         total = len(patches) / self.opt.batch_size

@@ -28,10 +28,11 @@ flags.DEFINE_integer("channel", 3, "Image channel")
 flags.DEFINE_integer("training_images", 100, "number of training images randonly chosen in each training round")
 
 flags.DEFINE_integer("obj_size", 40, "size of the patch the score regression operates on (sub sampling of whole image for speed)")
-flags.DEFINE_integer("batch_size", 40, "batch size of objNet")
+flags.DEFINE_integer("batch_size", 64, "batch size of objNet")
 flags.DEFINE_integer("obj_temperature", 10, "scaling factor of ground truth scores, affects sharpness of score distribution later in the pipeline")
 flags.DEFINE_integer("training_hyps", 16, "number of reprojection error images per training image in each training round")
 flags.DEFINE_integer("max_steps", 2000, "total number of training rounds")
+flags.DEFINE_string("obj_model", None, "objNet model")
 
 FLAGS = flags.FLAGS
 
