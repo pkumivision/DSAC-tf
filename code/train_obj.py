@@ -10,7 +10,7 @@ flags = tf.app.flags
 flags.DEFINE_string("dataset_dir", "../image", "Dataset directory")
 flags.DEFINE_string("list", "../list/train.list", "Image list directory")
 flags.DEFINE_string("checkpoint_dir", "./checkpoints/", "Directory name to save the checkpoints")
-flags.DEFINE_string("loss", "L1", "loss type")
+flags.DEFINE_string("loss", "L2", "loss type")
 flags.DEFINE_string("gpu_no", "0", "gpu number")
 flags.DEFINE_float("learning_rate", 1e-4, "Learning rate of for adam")
 flags.DEFINE_float("learning_rate_decay", 0.5, "Learning rate decay")
