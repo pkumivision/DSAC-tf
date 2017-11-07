@@ -6,5 +6,5 @@ python -u ../code/train_obj.py \
   --training_images=100 \
   --training_patches=512 \
   --batch_size=64 \
-  --max_steps=700000 \
+  --max_steps=400000 \
   --checkpoint_dir=./checkpoints/obj | tee $log

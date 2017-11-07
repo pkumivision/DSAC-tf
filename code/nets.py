@@ -69,7 +69,7 @@ def objNet(inputs,
            dropout_keep_prob=0.5,
            spatial_squeeze=True,
            scope='objNet'):
-  with tf.variable_scope(scope, 'obj', [inputs]) as sc:
+  with tf.variable_scope(scope, 'objNet', [inputs]) as sc:
     end_points_collection = sc.name + '_end_points'
     # Collect outputs for conv2d, fully_connected and max_pool2d.
     with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.max_pool2d],
@@ -91,6 +91,45 @@ def objNet(inputs,
       # 2x2
       net = slim.conv2d(net, 4096, [2, 2], stride=1, padding='VALID', scope='fc11')
       net = slim.conv2d(net, 4096, [1, 1], stride=1, padding='VALID', scope='fc12')
+      net = slim.conv2d(net, num_classes, [1, 1], stride=1, padding='VALID', scope='fc13',
+                        activation_fn=None, normalizer_fn=None)
+
+      # Convert end_points_collection into a end_point dict.
+      end_points = slim.utils.convert_collection_to_dict(end_points_collection)
+      if spatial_squeeze:
+        net = tf.squeeze(net, [1, 2], name='fc13/squeezed')
+        end_points[sc.name + '/fc13'] = net
+      return net, end_points
+
+def scoreNet(inputs,
+           num_classes=3,
+           is_training=True,
+           dropout_keep_prob=0.5,
+           spatial_squeeze=True,
+           scope='scoreNet'):
+  with tf.variable_scope(scope, 'scoreNet', [inputs]) as sc:
+    end_points_collection = sc.name + '_end_points'
+    # Collect outputs for conv2d, fully_connected and max_pool2d.
+    with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.max_pool2d],
+                        outputs_collections=end_points_collection):
+      # 40x40
+      net = slim.conv2d(inputs, 32, [3, 3], stride=1, padding='SAME', scope='conv1')
+      net = slim.conv2d(net, 32, [3, 3], stride=2, padding='SAME', scope='conv2')
+      # 20x20
+      net = slim.conv2d(net, 64, [3, 3], stride=1, padding='SAME', scope='conv3')
+      net = slim.conv2d(net, 64, [3, 3], stride=2, padding='SAME', scope='conv4')
+      # 10x10
+      net = slim.conv2d(net, 128, [3, 3], stride=1, padding='SAME', scope='conv5')
+      net = slim.conv2d(net, 128, [3, 3], stride=2, padding='SAME', scope='conv6')
+      # 5x5
+      net = slim.conv2d(net, 256, [3, 3], stride=1, padding='SAME', scope='conv7')
+      net = slim.conv2d(net, 256, [3, 3], stride=2, padding='VALID', scope='conv8')
+      # 2x2
+      net = slim.conv2d(net, 512, [3, 3], stride=1, padding='SAME', scope='conv9')
+      net = slim.conv2d(net, 512, [3, 3], stride=2, padding='SAME', scope='conv10')
+      # 1x1
+      net = slim.conv2d(net, 1024, [1, 1], stride=1, padding='VALID', scope='fc11')
+      net = slim.conv2d(net, 1024, [1, 1], stride=1, padding='VALID', scope='fc12')
       net = slim.conv2d(net, num_classes, [1, 1], stride=1, padding='VALID', scope='fc13',
                         activation_fn=None, normalizer_fn=None)
 

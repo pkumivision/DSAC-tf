@@ -46,14 +46,14 @@ class ScoreLearner(object):
                                           self.global_step+1)
 
     def build_graph(self, mode):
-        with tf.name_scope('objNet'):
+        with tf.name_scope('obj'):
             self.ol = objLearner(self.opt)
             self.ol.build_graph()
-        with tf.name_scope('scoreNet'):
+        with tf.name_scope('score'):
             self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.channel))
             self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.batch_size))
             input_process = tf.cast(self.input, tf.float32) - 45.0
-        self.preds, self.end_points = objNet(input_process)
+            self.preds, self.end_points = scoreNet(input_process)
 
     def train(self):
         self.build_graph('train')
