@@ -49,31 +49,7 @@ class scoreGenerator(object):
 
     def _new_epoch(self):
 
-        def _getRandHyp(guassRot, gaussTrans):
-            trans = np.random.normal(0, gaussTrans, size=3)
-            rotAxis = np.random.normal(0, 1, size=3)
-            rotAxis = rotAxis / np.linalg.norm(rotAxis)
-            rotAxis = rotAxis * np.random.normal(0, guassRot) * math.pi / 180.0
-            rot,_ = cv2.Rodrigues(rotAxis)
-            transform = np.eye(4)
-            transform[:3,:3] = rot
-            transform[:3,3] = trans
-            return transform
-
-        def createScore(poseGT):
-            driftLevel = np.random.randint(2)
-            if driftLevel == 0:
-                poseNoise = np.matmul(poseGT, self._getRandHyp(2, 2))
-            else:
-                poseNoise = np.matmul(poseGT, self._getRandHyp(10, 100))
-            poseNoise_cv = our2cv(poseNoise)
-            diffMap = getDiffMap(poseNoise, estObj, sampling, properties.getCamMat())
-            angularDistance, translationDistance = calcDistance(poseGT, poseNoise)
-            correct = 0
-            if angularDistance<5 and translationDistance<50:
-                correct = 1
-            score = -self.opt.obj_temperature * np.max(angularDistance, translationDistance/10)
-            return diffMap, score, correct
+        
 
         start_time = time.time()
         np.random.shuffle(self.indexs)
@@ -86,11 +62,15 @@ class scoreGenerator(object):
             pose = getInfo(path.join(self.opt.dataset_dir, self.pose_paths[curi]))
             sampling = stochasticSubSample(self.opt.img_height, self.opt.img_width, self.opt.obj_size, self.opt.input_size)
             estObj = self._getCoordImg(rgb, sampling)
+
             pool = Pool(16)
-           # res = pool.map(createScore, np.repeat(pose,self.opt.training_hyps))
-            res = pool.map(run, np.arange(10))
+            poses = np.repeat(pose,self.opt.training_hyps)
+            estObjs = np.repeat(estObj,self.opt.training_hyps)
+            samplings = np.repeat(sampling,self.opt.training_hyps)
+            res = pool.map(createScore, zip(poses,estObjs,samplings))
             pool.close()
             pool.join()
+
             diffMap, score, correct = zip(*res)
             self.data+=diffMap
             self.scores+=score
@@ -117,5 +97,29 @@ class scoreGenerator(object):
 
         return data, label
 
-def run(a):
-    return a+1
+def _getRandHyp(guassRot, gaussTrans):
+    trans = np.random.normal(0, gaussTrans, size=3)
+    rotAxis = np.random.normal(0, 1, size=3)
+    rotAxis = rotAxis / np.linalg.norm(rotAxis)
+    rotAxis = rotAxis * np.random.normal(0, guassRot) * math.pi / 180.0
+    rot,_ = cv2.Rodrigues(rotAxis)
+    transform = np.eye(4)
+    transform[:3,:3] = rot
+    transform[:3,3] = trans
+    return transform
+
+def createScore(args):
+    poseGT, estObj, sampling = args
+    driftLevel = np.random.randint(2)
+    if driftLevel == 0:
+        poseNoise = np.matmul(poseGT, getRandHyp(2, 2))
+    else:
+        poseNoise = np.matmul(poseGT, getRandHyp(10, 100))
+    poseNoise_cv = our2cv(poseNoise)
+    diffMap = getDiffMap(poseNoise, estObj, sampling, properties.getCamMat())
+    angularDistance, translationDistance = calcDistance(poseGT, poseNoise)
+    correct = 0
+    if angularDistance<5 and translationDistance<50:
+        correct = 1
+    score = -self.opt.obj_temperature * np.max(angularDistance, translationDistance/10)
+    return diffMap, score, correct
