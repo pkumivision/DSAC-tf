@@ -141,11 +141,18 @@ class objLearner(object):
 
     def predict(self, sess, patches):
         objs = []
-        total = len(patches) / self.opt.batch_size
+        total = int(len(patches) / self.opt.batch_size)
         for itr in xrange(total):
             preds = sess.run(self.preds, feed_dict={self.input:patches[itr:itr+self.opt.batch_size]})
             objs.append(preds)
-        return np.concatenate(objs, axis=0)
+        d = len(patches)-total*self.opt.batch_size
+        if d > 0:
+            tail = patches[total*self.opt.batch_size:]+patches[:self.opt.batch_size-d]
+            preds = sess.run(self.preds, feed_dict={self.input:tail})
+            objs.append(prds)
+        objs = np.concatenate(objs, axis=0)
+        objs = objs[:len(patches)]
+        return objs
 
     def test(self):
         self.build_graph('test')

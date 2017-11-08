@@ -28,9 +28,9 @@ def getInfo(pose_txt):
 def stochasticSubSample(h, w, targetSize, patchSize):
     rows = h
     cols = w
-    sampling = np.zeros((targetSize, targetSize, 2))
-    xStride = (cols - patchSize) / targetSize
-    yStride = (rows - patchSize) / targetSize
+    sampling = np.zeros((targetSize, targetSize, 2), dtype=np.int)
+    xStride = (cols - patchSize) / float(targetSize)
+    yStride = (rows - patchSize) / float(targetSize)
     sampleX = 0
     minX = patchSize / 2
     x = xStride + patchSize / 2

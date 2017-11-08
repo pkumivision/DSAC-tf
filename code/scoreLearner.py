@@ -12,7 +12,7 @@ import cv2
 from objLearner import objLearner
 from scoreGenerator import scoreGenerator
 
-class ScoreLearner(object):
+class scoreLearner(object):
     def __init__(self, opt):
         self.opt = opt
 
@@ -30,11 +30,10 @@ class ScoreLearner(object):
             tf.summary.scalar(var.op.name+'/gradients', tf.reduce_mean(grad))
         #tf.summary.image('image', self.input)
 
-    def get_train_op(self):
-        train_vars = [var for var in tf.trainable_variables()]
+    def get_train_op(self, var_list):
         optim = tf.train.AdamOptimizer(self.learning_rate, self.opt.beta1)
         self.grads_and_vars = optim.compute_gradients(self.loss,
-                                                          var_list=train_vars)
+                                                          var_list=var_list)
         self.train_op = optim.apply_gradients(self.grads_and_vars)
         self.global_step = tf.Variable(0,
                                        name='global_step',
@@ -42,12 +41,12 @@ class ScoreLearner(object):
         self.incr_global_step = tf.assign(self.global_step,
                                           self.global_step+1)
 
-    def build_graph(self, mode):
+    def build_graph(self, mode='train'):
         self.ol = objLearner(self.opt)
-        self.ol.build_graph()
+        self.ol.build_graph(mode)
 
         self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.channel))
-        self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.batch_size))
+        self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.batch_size,1))
         input_process = tf.cast(self.input, tf.float32) - 45.0
         self.preds, self.end_points = scoreNet(input_process)
 
@@ -58,9 +57,6 @@ class ScoreLearner(object):
         self.learning_rate = tf.Variable(0.0, trainable=False)
         new_lr = tf.placeholder(tf.float32, shape=[], name='new_learning_rate')
         lr_update = tf.assign(self.learning_rate, new_lr)
-
-        self.get_train_op()
-        self.collect_summaries()
 
         obj_parameters = []
         score_parameters = []
@@ -74,6 +70,9 @@ class ScoreLearner(object):
                     print 'UNKNOWN PARAMETER:', v.name
             parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) \
                                             for v in score_parameters])
+
+        self.get_train_op(score_parameters)
+        self.collect_summaries()
 
         self.saver = tf.train.Saver([var for var in score_parameters] + \
                                     [self.global_step])
