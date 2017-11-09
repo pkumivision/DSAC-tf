@@ -45,7 +45,7 @@ class scoreLearner(object):
         self.ol = objLearner(self.opt)
         self.ol.build_graph(mode)
 
-        self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.channel))
+        self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.obj_channel))
         self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.batch_size,1))
         input_process = tf.cast(self.input, tf.float32) - 45.0
         self.preds, self.end_points = scoreNet(input_process)

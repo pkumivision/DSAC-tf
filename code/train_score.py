@@ -26,6 +26,7 @@ flags.DEFINE_boolean("continue_train", False, "Continue training from previous c
 flags.DEFINE_integer("input_size", 42, "RGB patch size")
 flags.DEFINE_integer("channel", 3, "Image channel")
 flags.DEFINE_integer("training_images", 100, "number of training images randonly chosen in each training round")
+flags.DEFINE_integer("obj_channel", 1, "number of channels for the score regression")
 
 flags.DEFINE_integer("obj_size", 40, "size of the patch the score regression operates on (sub sampling of whole image for speed)")
 flags.DEFINE_integer("batch_size", 64, "batch size of objNet")
