@@ -48,9 +48,6 @@ class scoreGenerator(object):
         return prediction
 
     def _new_epoch(self):
-
-        
-
         start_time = time.time()
         np.random.shuffle(self.indexs)
         self.data = []
@@ -62,11 +59,14 @@ class scoreGenerator(object):
             pose = getInfo(path.join(self.opt.dataset_dir, self.pose_paths[curi]))
             sampling = stochasticSubSample(self.opt.img_height, self.opt.img_width, self.opt.obj_size, self.opt.input_size)
             estObj = self._getCoordImg(rgb, sampling)
+            estObj = estObj.reshape(-1,3)
 
             pool = Pool(16)
-            poses = np.repeat(pose,self.opt.training_hyps)
-            estObjs = np.repeat(estObj,self.opt.training_hyps)
-            samplings = np.repeat(sampling,self.opt.training_hyps)
+       #     self.opt.training_hyps = 1
+       #     res = createScore((pose,estObj,sampling))
+            poses = np.repeat(pose[np.newaxis], self.opt.training_hyps, axis=0)
+            estObjs = np.repeat(estObj[np.newaxis], self.opt.training_hyps, axis=0)
+            samplings = np.repeat(sampling[np.newaxis], self.opt.training_hyps, axis=0)
             res = pool.map(createScore, zip(poses,estObjs,samplings))
             pool.close()
             pool.join()
@@ -97,7 +97,7 @@ class scoreGenerator(object):
 
         return data, label
 
-def _getRandHyp(guassRot, gaussTrans):
+def getRandHyp(guassRot, gaussTrans):
     trans = np.random.normal(0, gaussTrans, size=3)
     rotAxis = np.random.normal(0, 1, size=3)
     rotAxis = rotAxis / np.linalg.norm(rotAxis)
@@ -116,10 +116,10 @@ def createScore(args):
     else:
         poseNoise = np.matmul(poseGT, getRandHyp(10, 100))
     poseNoise_cv = our2cv(poseNoise)
-    diffMap = getDiffMap(poseNoise, estObj, sampling, properties.getCamMat())
+    diffMap = getDiffMap(poseNoise_cv, estObj, sampling, properties.getCamMat())
     angularDistance, translationDistance = calcDistance(poseGT, poseNoise)
     correct = 0
     if angularDistance<5 and translationDistance<50:
         correct = 1
-    score = -self.opt.obj_temperature * np.max(angularDistance, translationDistance/10)
+    score = 10 * np.max((angularDistance, translationDistance/10))
     return diffMap, score, correct

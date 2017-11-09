@@ -12,7 +12,7 @@ def tolist_obj(outpath, sets):
     for no in sets:
         seq_name = 'seq-{:0>2d}'.format(no)
         seq_dir = path.join(root_dir, seq_name)
-        l = len(os.listdir(seq_dir))/3
+        l = len(os.listdir(seq_dir))/4
         for i in xrange(l):
             frame_name = seq_name+'/frame-{:0>6d}'.format(i)
             print >> out, frame_name+'.color.png', seq_name+'/{:0>6d}.npy'.format(i)
@@ -22,7 +22,7 @@ def tolist_score(outpath, sets):
     for no in sets:
         seq_name = 'seq-{:0>2d}'.format(no)
         seq_dir = path.join(root_dir, seq_name)
-        l = len(os.listdir(seq_dir))/3
+        l = len(os.listdir(seq_dir))/4
         for i in xrange(l):
             frame_name = seq_name+'/frame-{:0>6d}'.format(i)
             print >> out, frame_name+'.color.png', frame_name+'.pose.txt'.format(i)

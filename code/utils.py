@@ -1,6 +1,8 @@
 import re
 import numpy as np
 import math
+import cv2
+import properties as cfg
 
 def getInfo(pose_txt):
     a = []
@@ -55,6 +57,7 @@ def our2cv(trans):
     rmat = trans[:3,:3]
     rmat[1:3] = -rmat[1:3]
     rvec, _ = cv2.Rodrigues(rmat)
+    rvec = np.squeeze(rvec)
 
     tvec = trans[:3,3]
     tvec[1:3] = -tvec[1:3]
@@ -77,7 +80,7 @@ def calcDistance(pose1, pose2):
     rotDiff = np.matmul(rot1, np.linalg.inv(rot2))
     trace = np.trace(rotDiff)
     trace = np.min([3.0, np.max([-1.0,trace])])
-    angularDistance = 180.0*np.arcos((trace-1.0)/2.0)/math.pi
+    angularDistance = 180.0*np.arccos((trace-1.0)/2.0)/math.pi
 
     trans1 = pose1[:,3]
     trans2 = pose2[:,3]

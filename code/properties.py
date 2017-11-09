@@ -1,5 +1,7 @@
 import numpy as np
 
+CNN_OBJ_MAXINPUT = 100.0
+
 imageWidth = 640
 imageHeight = 480
 
