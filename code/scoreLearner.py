@@ -45,8 +45,8 @@ class scoreLearner(object):
         self.ol = objLearner(self.opt)
         self.ol.build_graph(mode)
 
-        self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.obj_channel))
-        self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.batch_size,1))
+        self.input = tf.placeholder(dtype=tf.uint8, shape=(self.opt.score_batch_size, self.opt.obj_size, self.opt.obj_size, self.opt.obj_channel))
+        self.labels = tf.placeholder(dtype=tf.float32, shape=(self.opt.score_batch_size,1))
         input_process = tf.cast(self.input, tf.float32) - 45.0
         self.preds, self.end_points = scoreNet(input_process)
 
@@ -102,7 +102,7 @@ class scoreLearner(object):
             lr_value = self.opt.learning_rate
             data_generator = scoreGenerator(self.opt, self.ol, sess)
             self.total = data_generator.total
-            self.opt.steps_per_epoch = int(self.total//self.opt.batch_size)
+            self.opt.steps_per_epoch = int(self.total//self.opt.score_batch_size)
 
             for step in xrange(1, self.opt.max_steps):
                 fetches = {
@@ -162,7 +162,7 @@ class scoreLearner(object):
                 coord = tf.train.Coordinator()
                 threads = tf.train.start_queue_runners(coord=coord)
                 start_time = time.time()
-                total = int(math.ceil(self.total/self.opt.batch_size))
+                total = int(math.ceil(self.total/self.opt.score_batch_size))
 
                 t = f = 0.0
 
@@ -171,7 +171,7 @@ class scoreLearner(object):
                                'image_path' : self.image_paths,
                                'labels': self.labels}
                     results = sess.run(fetches)
-                    print '\r{}/{}  time={}/img'.format(itr, total, (time.time()-start_time)/itr/self.opt.batch_size),
+                    print '\r{}/{}  time={}/img'.format(itr, total, (time.time()-start_time)/itr/self.opt.score_batch_size),
                     preds = results['preds']
                     paths = results['image_path']
                     labels = results['labels']
