@@ -75,8 +75,8 @@ class scoreGenerator(object):
             # total_correct += np.sum(correct)
 
             for h in xrange(self.opt.training_hyps):
-                diffMap, score, correct = createScore((pose, estObj, sampling))
-                self.data.append(diffMap)
+                diffMap, score, correct = createScore(pose, estObj, sampling)
+                self.data.append(diffMap.reshape(40,40))
                 self.scores.append(score)
                 total_correct += correct
 
@@ -112,8 +112,7 @@ def getRandHyp(guassRot, gaussTrans):
     transform[:3,3] = trans
     return transform
 
-def createScore(args):
-    poseGT, estObj, sampling = args
+def createScore(poseGT, estObj, sampling):
     driftLevel = np.random.randint(2)
     if driftLevel == 0:
         poseNoise = np.matmul(poseGT, getRandHyp(2, 2))
