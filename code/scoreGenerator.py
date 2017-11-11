@@ -14,7 +14,7 @@ class scoreGenerator(object):
     def __init__(self, opt, objLearner, sess):
             self.opt = opt
             self.ol = objLearner
-            self.sess = sess 
+            self.sess = sess
             self.rgb_paths = []
             self.pose_paths = []
             with open(opt.list) as f:
@@ -61,20 +61,24 @@ class scoreGenerator(object):
             estObj = self._getCoordImg(rgb, sampling)
             estObj = estObj.reshape(-1,3)
 
-            pool = Pool(16)
-       #     self.opt.training_hyps = 1
-       #     res = createScore((pose,estObj,sampling))
-            poses = np.repeat(pose[np.newaxis], self.opt.training_hyps, axis=0)
-            estObjs = np.repeat(estObj[np.newaxis], self.opt.training_hyps, axis=0)
-            samplings = np.repeat(sampling[np.newaxis], self.opt.training_hyps, axis=0)
-            res = pool.map(createScore, zip(poses,estObjs,samplings))
-            pool.close()
-            pool.join()
+       #      pool = Pool(1)
+       #      poses = np.repeat(pose[np.newaxis], self.opt.training_hyps, axis=0)
+       #      estObjs = np.repeat(estObj[np.newaxis], self.opt.training_hyps, axis=0)
+       #      samplings = np.repeat(sampling[np.newaxis], self.opt.training_hyps, axis=0)
+       #      res = pool.map(createScore, zip(poses,estObjs,samplings))
+       #      pool.close()
+       #      pool.join()
 
-            diffMap, score, correct = zip(*res)
-            self.data+=diffMap
-            self.scores+=score
-            total_correct += np.sum(correct)
+            # diffMap, score, correct = zip(*res)
+            # self.data+=diffMap
+            # self.scores+=score
+            # total_correct += np.sum(correct)
+
+            for h in xrange(self.opt.training_hyps):
+                diffMap, score, correct = createScore((pose, estObj, sampling))
+                self.data.append(diffMap)
+                self.scores.append(score)
+                total_correct += correct
 
         self.step = 0
         print "Generated {} patches ({:2f}% correct) in {}s".format(len(self.data), total_correct/len(self.data)*100.0, time.time()-start_time)
@@ -118,6 +122,7 @@ def createScore(args):
     poseNoise_cv = our2cv(poseNoise)
     diffMap = getDiffMap(poseNoise_cv, estObj, sampling, properties.getCamMat())
     angularDistance, translationDistance = calcDistance(poseGT, poseNoise)
+#    print angularDistance, translationDistance
     correct = 0
     if angularDistance<5 and translationDistance<50:
         correct = 1

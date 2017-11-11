@@ -54,12 +54,13 @@ def stochasticSubSample(h, w, targetSize, patchSize):
     return sampling.reshape(-1, 2)
 
 def our2cv(trans):
-    rmat = trans[:3,:3]
+    tmp = trans.copy()
+    rmat = tmp[:3,:3]
     rmat[1:3] = -rmat[1:3]
     rvec, _ = cv2.Rodrigues(rmat)
     rvec = np.squeeze(rvec)
 
-    tvec = trans[:3,3]
+    tvec = tmp[:3,3]
     tvec[1:3] = -tvec[1:3]
     return np.concatenate([rvec, tvec])
 
