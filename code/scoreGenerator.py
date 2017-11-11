@@ -76,8 +76,8 @@ class scoreGenerator(object):
 
             for h in xrange(self.opt.training_hyps):
                 diffMap, score, correct = createScore(pose, estObj, sampling)
-                self.data.append(diffMap.reshape(40,40))
-                self.scores.append(score)
+                self.data.append(diffMap.reshape(40,40,1))
+                self.scores.append(score.reshape(1))
                 total_correct += correct
 
         self.step = 0
