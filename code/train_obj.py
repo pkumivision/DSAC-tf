@@ -30,6 +30,8 @@ flags.DEFINE_integer("training_patches", 512, "number of patches extracted from 
 flags.DEFINE_integer("max_steps", 300000, "Maximum number of training iterations")
 flags.DEFINE_integer("batch_size", 64, "training batch size")
 
+flags.DEFINE_boolean("time_info", False, "show some time information")
+
 FLAGS = flags.FLAGS
 
 def main(_):

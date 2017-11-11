@@ -61,7 +61,8 @@ class DataGenerator(object):
 
         assert len(self.patches) == self.opt.training_images*self.opt.training_patches
         self.step = 0
-        print 'Generated {} patches from {} images in {}ms.'.format(len(self.patches),self.opt.training_images,(time.time()-start_time)*1000)
+        if self.opt.time_info:
+            print 'Generated {} patches from {} images in {}ms.'.format(len(self.patches),self.opt.training_images,(time.time()-start_time)*1000)
 
     def _next(self):
         if self.step == self.opt.training_images*self.opt.training_patches:

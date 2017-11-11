@@ -35,6 +35,8 @@ flags.DEFINE_integer("training_hyps", 16, "number of reprojection error images p
 flags.DEFINE_integer("max_steps", 2000, "total number of training rounds")
 flags.DEFINE_string("obj_model", None, "objNet model")
 
+flags.DEFINE_boolean("time_info", False, "show some time information")
+
 FLAGS = flags.FLAGS
 
 def main(_):

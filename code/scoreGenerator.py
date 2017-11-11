@@ -44,7 +44,8 @@ class scoreGenerator(object):
         prediction *= 1000 # conversion of meters to millimeters
         prediction = prediction.reshape((self.opt.obj_size,self.opt.obj_size,3))
 
-        print 'CNN prediction took {}ms'.format((time.time()-start_time)*1000)
+        if self.opt.time_info:
+            print 'CNN prediction took {}ms'.format((time.time()-start_time)*1000)
         return prediction
 
     def _new_epoch(self):
@@ -81,7 +82,8 @@ class scoreGenerator(object):
                 total_correct += correct
 
         self.step = 0
-        print "Generated {} patches ({:2f}% correct) in {}s".format(len(self.data), total_correct/len(self.data)*100.0, time.time()-start_time)
+        if self.opt.time_info:
+            print "Generated {} patches ({:2f}% correct) in {}s".format(len(self.data), total_correct/len(self.data)*100.0, time.time()-start_time)
 
     def _next(self):
         if self.step == self.opt.training_images*self.opt.training_hyps:
