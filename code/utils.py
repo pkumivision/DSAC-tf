@@ -29,7 +29,8 @@ def getInfo(pose_txt):
         a[i][3] *= 1000
     return np.linalg.inv(a)
 
-def stochasticSubSample(h, w, targetSize, patchSize):
+def stochasticSubSample(rgb, targetSize, patchSize):
+    h, w, _ = rgb.shape
     xStride = (w - patchSize) / float(targetSize)
     yStride = (h - patchSize) / float(targetSize)
     x, y = np.meshgrid(np.arange(targetSize) * xStride + patchSize / 2,np.arange(targetSize) * yStride + patchSize / 2)
@@ -38,7 +39,19 @@ def stochasticSubSample(h, w, targetSize, patchSize):
     x = np.random.rand(targetSize * targetSize) * xStride + x
     y = np.random.rand(targetSize * targetSize) * yStride + y
     sampling = np.array(zip(x,y)).astype(np.int)
-    return sampling
+
+    patches = []
+    for i in xrange(len(sampling)):
+        origX = sampling[i][0]
+        origY = sampling[i][1]
+
+        minx = origX - opt.input_size/2
+        maxx = origX + opt.input_size/2
+        miny = origY - opt.input_size/2
+        maxy = origY + opt.input_size/2
+
+        patches.append(rgb[miny:maxy,minx:maxx,:])
+    return sampling, patches
 
 def our2cv(trans):
     tmp = trans.copy()
@@ -75,20 +88,8 @@ def calcDistance(pose1, pose2):
     translationDistance = np.linalg.norm(trans1-trans2)
     return angularDistance, translationDistance
 
-def getCoordImg(rgb, sampling, sess, objLearner, opt):
+def getCoordImg(patches, sess, objLearner, opt):
     start_time = time.time()
-    patches = []
-    for i in xrange(len(sampling)):
-        origX = sampling[i][0]
-        origY = sampling[i][1]
-
-        minx = origX - opt.input_size/2
-        maxx = origX + opt.input_size/2
-        miny = origY - opt.input_size/2
-        maxy = origY + opt.input_size/2
-
-        patches.append(rgb[miny:maxy,minx:maxx,:])
-
     prediction = objLearner.predict(sess, patches)
     prediction *= 1000 # conversion of meters to millimeters
     prediction = prediction.reshape((opt.obj_size, opt.obj_size, 3))
