@@ -30,30 +30,15 @@ def getInfo(pose_txt):
     return np.linalg.inv(a)
 
 def stochasticSubSample(h, w, targetSize, patchSize):
-    rows = h
-    cols = w
-    sampling = np.zeros((targetSize, targetSize, 2), dtype=np.int)
-    xStride = (cols - patchSize) / float(targetSize)
-    yStride = (rows - patchSize) / float(targetSize)
-    sampleX = 0
-    minX = patchSize / 2
-    x = xStride + patchSize / 2
-    while x <= cols - patchSize / 2 + 1:
-        sampleY = 0
-        y = yStride + patchSize / 2
-        minY = patchSize / 2
-        while y <= rows - patchSize / 2 + 1:
-            curX = np.random.randint(minX, x)
-            curY = np.random.randint(minY, y)
-            sampling[sampleY][sampleX][0] = curX
-            sampling[sampleY][sampleX][1] = curY
-            sampleY += 1
-            minY = y
-            y += yStride
-        sampleX += 1
-        minX = x
-        x += xStride
-    return sampling.reshape(-1, 2)
+    xStride = (w - patchSize) / float(targetSize)
+    yStride = (h - patchSize) / float(targetSize)
+    x, y = np.meshgrid(np.arange(targetSize) * xStride + patchSize / 2,np.arange(targetSize) * yStride + patchSize / 2)
+    x = x.reshape(-1)
+    y = y.reshape(-1)
+    x = np.random.rand(targetSize * targetSize) * xStride + x
+    y = np.random.rand(targetSize * targetSize) * yStride + y
+    sampling = np.array(zip(x,y)).astype(np.int)
+    return sampling
 
 def our2cv(trans):
     tmp = trans.copy()
