@@ -87,3 +87,25 @@ def calcDistance(pose1, pose2):
     trans2 = pose2[:,3]
     translationDistance = np.linalg.norm(trans1-trans2)
     return angularDistance, translationDistance
+
+def getCoordImg(rgb, sampling, sess, objLearner, opt):
+    start_time = time.time()
+    patches = []
+    for i in xrange(len(sampling)):
+        origX = sampling[i][0]
+        origY = sampling[i][1]
+
+        minx = origX - opt.input_size/2
+        maxx = origX + opt.input_size/2
+        miny = origY - opt.input_size/2
+        maxy = origY + opt.input_size/2
+
+        patches.append(rgb[miny:maxy,minx:maxx,:])
+
+    prediction = objLearner.predict(sess, patches)
+    prediction *= 1000 # conversion of meters to millimeters
+    prediction = prediction.reshape((opt.obj_size, opt.obj_size, 3))
+
+    if opt.time_info:
+        print 'CNN prediction took {}ms'.format((time.time()-start_time)*1000)
+    return prediction

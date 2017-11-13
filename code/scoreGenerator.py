@@ -7,7 +7,7 @@ import cv2
 import os
 from os import path
 
-from utils import getInfo, stochasticSubSample, getDiffMap, calcDistance, our2cv
+from utils import getInfo, stochasticSubSample, getDiffMap, calcDistance, our2cv, getCoordImg
 import properties
 
 class scoreGenerator(object):
@@ -26,28 +26,6 @@ class scoreGenerator(object):
             self.total = len(self.rgb_paths) * self.opt.training_hyps
             self._new_epoch()
 
-    def _getCoordImg(self, rgb, sampling):
-        start_time = time.time()
-        patches = []
-        for i in xrange(len(sampling)):
-            origX = sampling[i][0]
-            origY = sampling[i][1]
-
-            minx = origX - self.opt.input_size/2
-            maxx = origX + self.opt.input_size/2
-            miny = origY - self.opt.input_size/2
-            maxy = origY + self.opt.input_size/2
-
-            patches.append(rgb[miny:maxy,minx:maxx,:])
-
-        prediction = self.ol.predict(self.sess, patches)
-        prediction *= 1000 # conversion of meters to millimeters
-        prediction = prediction.reshape((self.opt.obj_size,self.opt.obj_size,3))
-
-        if self.opt.time_info:
-            print 'CNN prediction took {}ms'.format((time.time()-start_time)*1000)
-        return prediction
-
     def _new_epoch(self):
         start_time = time.time()
         np.random.shuffle(self.indexs)
@@ -59,21 +37,8 @@ class scoreGenerator(object):
             rgb = cv2.imread(path.join(self.opt.dataset_dir, self.rgb_paths[curi]))
             pose = getInfo(path.join(self.opt.dataset_dir, self.pose_paths[curi]))
             sampling = stochasticSubSample(self.opt.img_height, self.opt.img_width, self.opt.obj_size, self.opt.input_size)
-            estObj = self._getCoordImg(rgb, sampling)
+            estObj = getCoordImg(rgb, sampling, self.sess, self.ol, self.opt)
             estObj = estObj.reshape(-1,3)
-
-       #      pool = Pool(1)
-       #      poses = np.repeat(pose[np.newaxis], self.opt.training_hyps, axis=0)
-       #      estObjs = np.repeat(estObj[np.newaxis], self.opt.training_hyps, axis=0)
-       #      samplings = np.repeat(sampling[np.newaxis], self.opt.training_hyps, axis=0)
-       #      res = pool.map(createScore, zip(poses,estObjs,samplings))
-       #      pool.close()
-       #      pool.join()
-
-            # diffMap, score, correct = zip(*res)
-            # self.data+=diffMap
-            # self.scores+=score
-            # total_correct += np.sum(correct)
 
             for h in xrange(self.opt.training_hyps):
                 diffMap, score, correct = createScore(pose, estObj, sampling)
