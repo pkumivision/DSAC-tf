@@ -96,7 +96,7 @@ class scoreGenerator(object):
     def next_batch(self):
         data = []
         label = []
-        for i in xrange(self.opt.batch_size):
+        for i in xrange(self.opt.score_batch_size):
             d, l = self._next()
             data.append(d)
             label.append(l)
