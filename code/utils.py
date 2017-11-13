@@ -45,10 +45,10 @@ def stochasticSubSample(rgb, targetSize, patchSize):
         origX = sampling[i][0]
         origY = sampling[i][1]
 
-        minx = origX - opt.input_size/2
-        maxx = origX + opt.input_size/2
-        miny = origY - opt.input_size/2
-        maxy = origY + opt.input_size/2
+        minx = origX - patchSize/2
+        maxx = origX + patchSize/2
+        miny = origY - patchSize/2
+        maxy = origY + patchSize/2
 
         patches.append(rgb[miny:maxy,minx:maxx,:])
     return sampling, patches

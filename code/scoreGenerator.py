@@ -36,7 +36,7 @@ class scoreGenerator(object):
             curi = self.indexs[i]
             rgb = cv2.imread(path.join(self.opt.dataset_dir, self.rgb_paths[curi]))
             pose = getInfo(path.join(self.opt.dataset_dir, self.pose_paths[curi]))
-            sampling, patches = stochasticSubSample(self.opt.img_height, self.opt.img_width, self.opt.obj_size, self.opt.input_size)
+            sampling, patches = stochasticSubSample(rgb, self.opt.obj_size, self.opt.input_size)
             estObj = getCoordImg(patches, self.sess, self.ol, self.opt)
             estObj = estObj.reshape(-1,3)
 
