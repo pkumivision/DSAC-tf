@@ -4,7 +4,7 @@ import math
 import cv2
 import time
 
-import properties as cfg
+from config import cfg
 
 def getInfo(pose_txt):
     a = []

@@ -8,6 +8,9 @@ import uuid
 import math
 from config import cfg
 import copy
+
+from utils import *
+
 np.set_printoptions(threshold=np.inf)
 
 def containNan(obj):
@@ -15,32 +18,6 @@ def containNan(obj):
 		if math.isnan(i):
 			return True
 	return False
-
-def stochasticSubSample(inputImg, targetSize, patchSize):
-	(rows, cols) = inputImg.shape
-	sampling = np.zeros((targetSize, targetSize, 2))
-	xStride = (cols - patchSize) / targetSize
-	yStride = (rows - patchSize) / targetSize
-	sampleX = 0
-	minX = patchSize / 2
-	x = xStride + patchSize / 2
-	while x <= cols - patchSize / 2 + 1:
-		sampleY = 0
-		y = yStride + patchSize / 2
-		minY = patchSize / 2
-		while y <= rows - patchSize / 2 + 1:
-			curX = np.random.randint(minX, x)
-			curY = np.random.randint(minY, y)
-			sampling[sampleY][sampleX][0] = curX
-			sampling[sampleY][sampleX][1] = curY
-			sampleY += 1
-			minY = y
-			y += yStride
-		sampleX += 1
-		minX = x
-		x += xStride
-	return sampling.reshape(-1, 2)
-
 
 def cv2our(cvTrans):
 	rots = cvTrans[0:3]
@@ -65,7 +42,6 @@ def cv2our(cvTrans):
 	tpt = tpt.reshape(3,1)
 	return np.append(rmat, tpt, axis = 1)
 
-
 def getRodVecAndTrans(rots, trans):
 	rv, _ = cv2.Rodrigues(rots)
 	res = np.zeros((6,), np.float32)
@@ -82,17 +58,6 @@ def getRots(hyp):
 
 def getTrans(hyp):
 	return hyp[0:3, 3]
-
-# @param hyp, cvForms
-def getDiffMap(hyp, sampling3D, sampling2D, cmat, distcoeffs):
-	points2D = sampling2D
-	points3D = sampling3D
-	projections, _ = cv2.projectPoints(sampling3D, hyp[0:3], hyp[3:6], cmat, distcoeffs)
-	(m, _, n) = projections.shape
-	projections = projections.reshape(m, n)
-	diffPt = points2D - projections
-	diffMap = np.minimum(np.linalg.norm(diffPt, axis = 1, keepdims = False), cfg.CNN_OBJ_MAXINPUT)
-	return diffMap
 
 # Get4Point Layer ---------------------------------------------------------------------------------
 
