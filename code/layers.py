@@ -314,10 +314,16 @@ def reprojection(inputs):
 
 # refine layer ---------------------------------------------------------------------------------
 def refine(inputs):
+	# some public params used in the function
 	in_obj = inputs[0]
 	in_hyp = inputs[4]
 	inlierMaps = np.zeros((in_hyp.shape[0], in_obj.shape[0]))
-	def _refine(sampling3D, sampling2D, objPts, imgPts, hyps, objIdx, shuffleIdx, cmat, distcoeffs):
+	shuffleIdx = np.zeros((cfg.REFTIMES, in_obj.shape[0]),dtype=np.int)
+	for i in range(shuffleIdx.shape[0]):
+		shuffleIdx[i] = np.arange(1, int(in_obj.shape[0])+1)
+		np.random.shuffle(shuffleIdx[i])
+
+	def _refine(sampling3D, sampling2D, objPts, imgPts, hyps, objIdx, cmat, distcoeffs):
 		refHyps = np.zeros(hyps.shape, dtype=np.float64)	
 		samplingCopy = copy.deepcopy(sampling3D)
 		
@@ -352,7 +358,7 @@ def refine(inputs):
 				inlierMaps[h][idx] = 0
 		return refHyps
 
-	def _refine_single(sampling3D, sampling2D, objPts, imgPts, hyps, objIdx, shuffleIdx, cmat, distcoeffs):
+	def _refine_single(sampling3D, sampling2D, objPts, imgPts, hyps, objIdx, cmat, distcoeffs):
 		refHyps = np.zeros(hyps.shape, dtype=np.float64)
 		for h in range(refHyps.shape[0]):
 			diffmaps = getDiffMap(hyps[h], sampling3D, sampling2D, cmat, distcoeffs)
@@ -378,7 +384,7 @@ def refine(inputs):
 		return refHyps
 
 	# @param grad, dLoss wrt hyp, hx6, actually the same shape as hyps
-	def _refine_grad(sampling3D, sampling2D, objPts, imgPts, hyps, objIdx, shuffleIdx, cmat, distcoeffs, grad):
+	def _refine_grad(sampling3D, sampling2D, objPts, imgPts, hyps, objIdx, cmat, distcoeffs, grad):
 		#print(grad)
 		# dRefine wrt the picked up points, which were used to generate pose before
 		# numeric method
@@ -395,7 +401,7 @@ def refine(inputs):
 
 					newHyp = np.append(rot1, tran1)
 
-					fstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp]), objIdx, shuffleIdx, cmat, distcoeffs)
+					fstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp]), objIdx, cmat, distcoeffs)
 					
 					# backward step
 					objPts[h][i][j] -= 2 * eps
@@ -403,7 +409,7 @@ def refine(inputs):
 
 					done, rot2, tran2 = cv2.solvePnP(objPts[h], imgPts[h], cmat, distcoeffs)
 					newHyp2 = np.append(rot2, tran2)
-					bstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp2]), objIdx, shuffleIdx, cmat, distcoeffs)
+					bstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp2]), objIdx, cmat, distcoeffs)
 					objPts[h][i][j] += eps
 					sampling3D[objIdx[h][i]][j] += eps
 
@@ -427,12 +433,12 @@ def refine(inputs):
 					sampling3D[i][j] += eps
 					done, rot1, tran1 = cv2.solvePnP(objPts[h], imgPts[h], cmat, distcoeffs)
 					newHyp = np.append(rot1, tran1)	
-					fstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp]), objIdx, shuffleIdx, cmat, distcoeffs)
+					fstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp]), objIdx, cmat, distcoeffs)
 					# backward step
 					sampling3D[i][j] -= 2 * eps
 					done, rot2, tran2 = cv2.solvePnP(objPts[h], imgPts[h], cmat, distcoeffs)
 					newHyp2 = np.append(rot2, tran2)
-					bstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp2]), objIdx, shuffleIdx, cmat, distcoeffs)
+					bstep = _refine_single(sampling3D, sampling2D, objPts, imgPts, np.array([newHyp2]), objIdx, cmat, distcoeffs)
 
 					sampling3D[i][j] += eps
 
@@ -442,10 +448,9 @@ def refine(inputs):
 		return jacobean_obj, jacobean_sample
 
 	def _refine_grad_op(op, grad):
-		[sampling3D, sampling2D, objPts, imgPts, thyp, objIdx, shuffleIdx, cmat, distcoeffs] = op.inputs
-
-		dObj, dSample = tf.py_func(_refine_grad, [sampling3D, sampling2D, objPts, imgPts, thyp, objIdx, shuffleIdx, cmat, distcoeffs, grad], [tf.float64, tf.float64])		
-		return [dSample, None, dObj, None, None, None, None, None, None]
+		[sampling3D, sampling2D, objPts, imgPts, thyp, objIdx, cmat, distcoeffs] = op.inputs
+		dObj, dSample = tf.py_func(_refine_grad, [sampling3D, sampling2D, objPts, imgPts, thyp, objIdx, cmat, distcoeffs, grad], [tf.float64, tf.float64])		
+		return [dSample, None, dObj, None, None, None, None, None]
 	
 	grad_name = "RefineGrad_" + str(uuid.uuid4())
 	tf.RegisterGradient(grad_name)(_refine_grad_op)
