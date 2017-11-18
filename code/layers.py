@@ -459,6 +459,28 @@ def refine(inputs):
 		output = tf.py_func(_refine, inputs, tf.float64)
 	return output
 
+def Rodrigues(r):
+    # r: [N, 3]
+    n = r.shape[0].value
+    theta = tf.norm(r, axis=1)
+    theta = tf.where(tf.equal(theta, 0), x=tf.ones_like(theta), y=theta)
+    theta = tf.reshape(theta, (n, 1))
+    r = tf.div(r, theta)
+    x, y, z = tf.split(r, [1, 1, 1], axis=1)
+    zero = tf.zeros_like(x, dtype=tf.float64)
+    a = tf.concat([zero, tf.negative(z), y, z, zero,
+                   tf.negative(x), tf.negative(y), x, zero], axis=1)
+    a = tf.reshape(a, (-1, 3, 3))
+    eye = tf.eye(3, dtype=tf.float64)
+    eye = tf.reshape(eye, (1, 3, 3))
+    eyes = tf.tile(eye, (n, 1, 1))
+    cos_theta = tf.reshape(tf.cos(theta), (n, 1, 1))
+    sin_theta = tf.reshape(tf.sin(theta), (n, 1, 1))
+    r = tf.reshape(r, (n, 3, 1))
+    R = tf.multiply(cos_theta, eyes) + tf.multiply(tf.subtract(tf.ones_like(cos_theta),
+                                                               cos_theta), tf.matmul(r, tf.transpose(r, (0, 2, 1)))) + tf.multiply(sin_theta, a)
+    return R
+
 '''
 # Testing ! for refine layer~~
 
