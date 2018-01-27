@@ -543,7 +543,7 @@ class RefineLayer:
 			eps = 1
 			jacobean_obj = np.zeros_like(objPts, np.float64)
 			jacobean_sample = np.zeros_like(sampling3D, np.float64)
-			inlierMaps = np.ones_like(self.inlierMaps)
+			#inlierMaps = np.ones_like(self.inlierMaps)
 			e1 = time.time()
 
 			NumericLayers.dRefine(jacobean_obj,
@@ -552,7 +552,7 @@ class RefineLayer:
 				sampling2D,
 				objPts,
 				imgPts,
-				inlierMaps,
+				self.inlierMaps,
 				objIdx,
 				shuffleIdx,
 				cmat,
