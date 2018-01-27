@@ -269,7 +269,7 @@ void c_refine(double * ref_hyps,
 	std::vector<std::vector<double> > ref_hyps_vec;
 	ref_hyps_vec.resize(hyp_num);
 
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for(int h = 0; h < hyp_num; h++)
 	{
 		std::vector<double> hyp = hyp_vec[h];
